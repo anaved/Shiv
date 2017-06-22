@@ -1,20 +1,27 @@
 #!/usr/bin/env python
 #
-#       box.py
+#       widget.py
 #       
+
 from django.conf import settings
 from django.template.loader import get_template
+import re
 
 from shiv import data_methods as dm
 from shiv.container import Container
 
 
-class BoxMeta(type):
+# from shiv.mod_settings import URL_NAMES
+url_names = settings.SHIV_URL_DICT.keys()
+
+class WidgetMeta(type):
     def __init__(cls, name, bases, dict):
         for b in bases:
             if hasattr(b, '_registry'):
-                b._registry[name] = cls
-                cls.box_id = name
+                pat = re.compile(dict['urlpat'])
+                urls = [e for e in map(lambda x :"" if not x else x, b._registry.keys()) if re.search(pat, e)]
+                for e in urls:b._registry[e].append((dict['index'], cls))
+                cls.widget_id = name
                 module = __import__(dict['__module__'].rsplit('.', 1)[0] + '.media', fromlist=[dict['__module__'].rsplit('.', 1)[0]])
                 try:
                     cls._media = getattr(module, name + 'Media')()
@@ -29,17 +36,18 @@ class BoxMeta(type):
                     cls._media.template = get_template(cls._media.template)
                 break
         return type.__init__(cls, name, bases, dict)
-        
-class Box(Container):
-    __metaclass__ = BoxMeta
-    _registry = {}
-    title = "Box"
+
+class Widget(Container):
+    __metaclass__ = WidgetMeta
+    _registry = dict([(e, []) for e in url_names])    
+    title = "Widget"
     _for_loggedin = None
-        
+
     def __init__(self, *args, **kwargs):
         request = args[0]
         excludes = dm.get_excludes(request.user)
         self.tabs = filter(lambda x: x.__module__ + '.' + x.__name__ not in excludes and x.__module__ not in excludes, self._tab_class)
+        
         self.tabs = map(lambda x, i: x(
                             is_default=getattr(self, 'default_tab', i) == i,
                             tab_client=getattr(self, 'client', None),
@@ -47,14 +55,13 @@ class Box(Container):
                             ), self.tabs, range(len(self.tabs))
                         )
          
-        self.context = {'tabs': [], 'id': self.box_id, 'title' : self.title,
-                        'tab_style': getattr(self, 'tab_style', 'horizontal'),
-                        'images': self._media.images}
+        self.context = {'tabs': [], 'id': self.widget_id, 'title' : self.title, 'images': self._media.images}
         self.request = request
 
-    def show(self, template=None, is_json=False, start=1, count=10):
-        self.context['tabs'] = [t.show(start=start, count=count, is_json=is_json) for t in self.tabs]
-        return super(Box, self).show(template, self.request, self.context, is_json)
+    def show(self, template=None, is_json=False, start=1, count=5):
+        if len(self.context['tabs']) == 0 :
+            self.context['tabs'] = [t.show(start=start, count=count, is_json=is_json) for t in self.tabs]
+        return super(Widget, self).show(template, self.request, self.context, is_json)
 
     @classmethod
     def get_css(cls):
@@ -63,6 +70,3 @@ class Box(Container):
     @classmethod
     def get_js(cls):
         return cls._media.js + cls._media.extra_js
-
-
-        

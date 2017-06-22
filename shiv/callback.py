@@ -16,12 +16,12 @@ class Callback(object):
         return cls._instance
 
     def register(self, func):        
-        key = str(self._index)+func.func_name
+        key = str(self._index) + func.func_name
         def wrap(*args, **kwargs):
             return func(*args, **kwargs)
             
         self._registry[key] = wrap
-        self._index+=1
-        wrap.key=key
+        self._index += 1
+        wrap.key = key
         return wrap
 

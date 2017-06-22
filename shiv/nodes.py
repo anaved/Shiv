@@ -4,7 +4,7 @@
 #       
 
 class Node(dict):
-    def __init__(self, text, link = None, data_id = None,target='_self', image_link = None, image_link_over=None, extra_class = '', tag_type=None):
+    def __init__(self, text, link=None, data_id=None, target='_self', image_link=None, image_link_over=None, extra_class='', tag_type=None):
         type = (link and not image_link and 'has_link') or (data_id and 'has_data_id') or (link and image_link and 'has_image') or 'plain_text'
         tag_type = tag_type or 'span'    
         link = link or ''

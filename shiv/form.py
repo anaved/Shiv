@@ -1,25 +1,26 @@
 #!/usr/bin/env python
 #
 #       form.py
-#       
+#
 
-from django.forms import Form
-from django.forms import ModelForm
+from django.forms import Form, ModelForm
 from django.utils.encoding import force_unicode
 from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
+
 from shiv.field_templates import DEFAULT_TEMPLATE
+
 
 class ShivModelForm(ModelForm):
 
     def html_output(self, normal_row, error_row, row_ender, help_text_html, errors_on_separate_row, state):
         "Helper function for outputting HTML. Used by as_table(), as_ul(), as_p()."
-        top_errors = self.non_field_errors() # Errors that should be displayed above all fields.
+        top_errors = self.non_field_errors()  # Errors that should be displayed above all fields.
         output, hidden_fields = [], []
         for name, field in self.fields.items():
             template = getattr(field, 'template', None) or normal_row
             bf = self[name]
-            bf_errors = self.error_class([conditional_escape(error) for error in bf.errors]) # Escape and cache in local variable.
+            bf_errors = self.error_class([conditional_escape(error) for error in bf.errors])  # Escape and cache in local variable.
             if bf.is_hidden:
                 if bf_errors:
                     top_errors.extend([u'(Hidden field %s) %s' % (name, force_unicode(e)) for e in bf_errors])
@@ -44,7 +45,7 @@ class ShivModelForm(ModelForm):
                 output.append(template % {'state': state, 'errors': force_unicode(bf_errors), 'label': force_unicode(label), 'field': unicode(bf), 'help_text': help_text})
         if top_errors:
             output.insert(0, error_row % force_unicode(top_errors))
-        if hidden_fields: # Insert any hidden fields in the last row.
+        if hidden_fields:  # Insert any hidden fields in the last row.
             str_hidden = u''.join(hidden_fields)
             if output:
                 last_row = output[-1]
@@ -64,27 +65,27 @@ class ShivModelForm(ModelForm):
                 output.append(str_hidden)
         return mark_safe(u'\n'.join(output))
 
-    def as_shiv(self, state = 'enabled'):
+    def as_shiv(self, state='enabled'):
         return self.html_output(DEFAULT_TEMPLATE, u'%s', '', u' %s', False, state)
     def as_shiv_enabled(self):
-        return self.as_shiv(state = 'enabled')
-                                
+        return self.as_shiv(state='enabled')
+
     def as_shiv_disabled(self):
-        return self.as_shiv(state = 'disabled')
+        return self.as_shiv(state='disabled')
 
 class ShivForm(Form):
     def __init__(self, *args, **kwargs):
-        self.id=self.__class__.__name__
+        self.id = self.__class__.__name__
         super(ShivForm, self).__init__(*args, **kwargs)
 
     def html_output(self, normal_row, error_row, row_ender, help_text_html, errors_on_separate_row, state):
         "Helper function for outputting HTML. Used by as_table(), as_ul(), as_p()."
-        top_errors = self.non_field_errors() # Errors that should be displayed above all fields.
+        top_errors = self.non_field_errors()  # Errors that should be displayed above all fields.
         output, hidden_fields = [], []
         for name, field in self.fields.items():
-            template = getattr(field, 'template', None) or normal_row            
+            template = getattr(field, 'template', None) or normal_row
             bf = self[name]
-            bf_errors = self.error_class([conditional_escape(error) for error in bf.errors]) # Escape and cache in local variable.
+            bf_errors = self.error_class([conditional_escape(error) for error in bf.errors])  # Escape and cache in local variable.
             if bf.is_hidden:
                 if bf_errors:
                     top_errors.extend([u'(Hidden field %s) %s' % (name, force_unicode(e)) for e in bf_errors])
@@ -106,10 +107,10 @@ class ShivForm(Form):
                     help_text = help_text_html % force_unicode(field.help_text)
                 else:
                     help_text = u''
-                output.append(template % {'state': state, 'errors': force_unicode(bf_errors), 'label': force_unicode(label), 'field': unicode(bf), 'help_text': help_text})                
+                output.append(template % {'state': state, 'errors': force_unicode(bf_errors), 'label': force_unicode(label), 'field': unicode(bf), 'help_text': help_text})
         if top_errors:
             output.insert(0, error_row % force_unicode(top_errors))
-        if hidden_fields: # Insert any hidden fields in the last row.
+        if hidden_fields:  # Insert any hidden fields in the last row.
             str_hidden = u''.join(hidden_fields)
             if output:
                 last_row = output[-1]
@@ -121,18 +122,18 @@ class ShivForm(Form):
                     # not be able to conscript the last row for our purposes,
                     # so insert a new, empty row.
                     last_row = template % {'state':state, 'errors': '', 'label': '', 'field': '', 'help_text': ''}
-                    output.append(last_row)                
-                output[-1] = last_row + str_hidden + row_ender                
+                    output.append(last_row)
+                output[-1] = last_row + str_hidden + row_ender
             else:
                 # If there aren't any rows in the output, just append the
                 # hidden fields.
                 output.append(str_hidden)
         return mark_safe(u'\n'.join(output))
 
-    def as_shiv(self, state = 'enabled'):
+    def as_shiv(self, state='enabled'):
         return self.html_output(DEFAULT_TEMPLATE, u'%s', '', u' %s', False, state)
     def as_shiv_enabled(self):
-        return self.as_shiv(state = 'enabled')
-                                
+        return self.as_shiv(state='enabled')
+
     def as_shiv_disabled(self):
-        return self.as_shiv(state = 'disabled')
+        return self.as_shiv(state='disabled')
